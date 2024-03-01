@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-deploy
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: echo-app
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: echo-app
+    spec:
+      serviceAccountName: runasanyuid
+      containers:
+      - name: http-echo
+        image: gcr.io/kubernetes-e2e-test-images/echoserver:2.2
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-service
+  namespace: default
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: echo-app
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: hello-sas
+  namespace: default
+spec:
+  host: hello-sas-default.apps.rosa.sasviya-5adf.mh2a.p3.openshiftapps.com
+  path: /hellosas
+  to:
+    kind: Service
+    name: echo-service
+    weight: 100
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
+  wildcardPolicy: None
+

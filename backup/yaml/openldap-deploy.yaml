@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: viya4--openldap-server
+    app.kubernetes.io/part-of: viya4
+  name: viya4-openldap-server
+  namespace: openldap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: viya4-openldap-server
+  template:
+    metadata:
+      labels:
+        app: viya4-openldap-server
+        app.kubernetes.io/part-of: viya4
+    spec:
+      serviceAccount: openldap-sa
+      serviceAccountName: openldap-sa
+      containers:
+      - name: viya4-openldap-server
+        image: bitnami/openldap:2.6.7
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 1001
+          runAsNonRoot: true
+          allowPrivilegeEscalation: true
+        env:
+        - name: LDAP_ADMIN_USERNAME
+          value: "admin"
+        - name: LDAP_ADMIN_PASSWORD
+          value: "lnxsas"
+        - name: LDAP_ROOT
+          value: "dc=example,dc=org"
+        - name: LDAP_ADMIN_DN
+          value: "cn=admin,dc=example,dc=org"
+        - name: LDAP_USERS
+          value: "sasadm,demo01,demo02"
+        - name: LDAP_PASSWORDS
+          value: "lnxsas,lnxsas,lnxsas"
+        - name: LDAP_PORT_NUMBER
+          value: "389"
+        - name: LDAP_GROUP
+          value: "sasusers"
+        ports:
+        - containerPort: 389
+          name: openldap
+        - containerPort: 636
+          name: openldaps
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 50m
+            memory: 50Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: viya4-openldap-service
+    app.kubernetes.io/part-of: viya4
+  name: viya4-openldap-service
+  namespace: openldap
+spec:
+  ports:
+  - name: openldap-insecure-port
+    port: 389
+    protocol: TCP
+    targetPort: 389
+  selector:
+    app: viya4-openldap-server
+

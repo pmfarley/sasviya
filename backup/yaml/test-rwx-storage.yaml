@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rwx-storage-test
+  namespace: viya4
+spec:
+  template:
+    spec:
+      containers:
+      - image: alpine:latest      
+        name: rwx-storage-test
+        command: [ "/bin/sh", "-c" ]
+        args:
+        - echo -e "\n--> Testing RWX storage - whoami";
+          id;
+
+          echo -e "\n--> Testing RWX storage - fileshare permissions";
+          ls -lisa / | grep mydata;
+
+          echo -e "\n--> Testing RWX storage - create test file";
+          echo "$(hostname)" > /mydata/hello.txt;
+          ls -lisa /mydata/hello.txt;
+          cat /mydata/hello.txt;
+          rm -f /mydata/hello.txt;
+
+          echo -e "\n--> Testing RWX storage - list contents of /mydata";
+          ls -lisa /mydata;
+
+          echo "--> Done";
+        volumeMounts:
+        - name: shared-volume
+          mountPath: /mydata
+      restartPolicy: Never
+      volumes:
+      - name: shared-volume
+        persistentVolumeClaim:
+          claimName: sas-efs-shared-pvc
