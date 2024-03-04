@@ -1,4 +1,4 @@
-# SAS Viya on ROSA - deployment notes
+# SAS Viya on AWS ROSA - deployment notes
 
 [TOC]
 
@@ -10,7 +10,7 @@ Copies of all YAML manifests etc. can be found in the `backup` folder.
 
 
 
-## Connect to environment
+## Connect to Jump Host and API server
 
 SSH (Hans)
 
@@ -26,7 +26,7 @@ https://console-openshift-console.apps.rosa.sasviya-5adf.mh2a.p3.openshiftapps.c
 
 
 
-## Cluster topology
+## Cluster topology overview
 
 ```shell
 # show SAS labels
@@ -55,49 +55,6 @@ ip-10-0-0-250.us-east-2.compute.internal   workload.sas.com/class   stateful    
 ip-10-0-0-56.us-east-2.compute.internal    workload.sas.com/class   compute      NoSchedule
 ip-10-0-0-94.us-east-2.compute.internal    <none>                   <none>       <none>
 ip-10-0-0-99.us-east-2.compute.internal    <none>                   <none>       <none>
-```
-
-
-
-## Deploy OpenLDAP server
-
-```shell
-oc new-project openldap
-oc create sa openldap-sa
-
-oc adm policy add-scc-to-user nonroot -n openldap -z openldap-sa
-
-oc apply -f ~/yaml/openldap-deploy.yaml 
-oc get deploy,svc,pods
-```
-
-Test
-
-```shell
-kubectl exec -it deploy/viya4-openldap-server --insecure-skip-tls-verify -- ldapsearch -H ldap://viya4-openldap-service.openldap.svc.cluster.local:389 -b "dc=example,dc=org" -x -D "cn=admin,dc=example,dc=org" -w "lnxsas"
-```
-
-Accounts:
-
-* sasadm / lnxsas
-* demo01 / lnxsas
-* demo02 / lnxsas
-
-
-
-## Create RWX Storage fileshare and test
-
-Fileshare (`sas-efs-shared-pvc`) used by SAS, requires `viya4` namespace. Note: this needs to be in place before the deployment starts.
-
-```shell
-kubectl apply -f ~/yaml/create-pvc-shared-data.yaml
-oc get pv,pvc
-
-oc apply -f ~/yaml/test-rwx-storage.yaml
-# check the log for any errors
-oc logs job/rwx-storage-test
-
-kubectl delete -f ~/yaml/create-pvc-shared-data.yaml
 ```
 
 
@@ -199,6 +156,49 @@ sas-viya plugins install --repo sas sid-functions
 sas-viya plugins install --repo sas transfer
 sas-viya plugins install --repo sas workload-orchestrator
 sas-viya plugins install --repo sas visual-forecasting
+```
+
+
+
+## Deploy OpenLDAP server
+
+```shell
+oc new-project openldap
+oc create sa openldap-sa
+
+oc adm policy add-scc-to-user nonroot -n openldap -z openldap-sa
+
+oc apply -f ~/yaml/openldap-deploy.yaml 
+oc get deploy,svc,pods
+```
+
+Test query (dumps LDAP database contents)
+
+```shell
+kubectl exec -it deploy/viya4-openldap-server --insecure-skip-tls-verify -- ldapsearch -H ldap://viya4-openldap-service.openldap.svc.cluster.local:389 -b "dc=example,dc=org" -x -D "cn=admin,dc=example,dc=org" -w "lnxsas"
+```
+
+Accounts:
+
+* sasadm / lnxsas
+* demo01 / lnxsas
+* demo02 / lnxsas
+
+
+
+## Create RWX Storage fileshare and test
+
+Fileshare (`sas-efs-shared-pvc`) used by SAS, requires `viya4` namespace. **Note**: this needs to be in place before the deployment starts.
+
+```shell
+kubectl apply -f ~/yaml/create-pvc-shared-data.yaml
+oc get pv,pvc
+
+oc apply -f ~/yaml/test-rwx-storage.yaml
+# check the log for any errors
+oc logs job/rwx-storage-test
+
+kubectl delete -f ~/yaml/create-pvc-shared-data.yaml
 ```
 
 
@@ -321,7 +321,7 @@ transformers:
 
 
 
-#### TLS - store server certificates
+#### TLS - handling web server certificates
 
 TLS options for Routes in OpenShift:
 
@@ -373,6 +373,18 @@ printf "\n- site-config/security/cacerts/le-r3.pem\n" >> site-config/security/cu
 
 
 
+#### Using an external PostgreSQL database
+
+tbd.
+
+
+
+#### Using local storage operator for SASWORK and CAS disk cache
+
+tbd.
+
+
+
 ## Build & deploy
 
 ### Simple deploy
@@ -387,6 +399,44 @@ kubectl apply --selector="sas.com/admin=cluster-wide" -f site.yaml
 kubectl apply --selector="sas.com/admin=cluster-local" -f site.yaml --prune
 kubectl apply --selector="sas.com/admin=namespace" -f site.yaml --prune
 ```
+
+
+
+### Redeploy when the namespace has been deleted
+
+```shell
+oc new-project viya4
+
+# the SCC definitions are still in place, but the bindings might be lost
+oc -n viya4 adm policy add-scc-to-user sas-cas-server -z sas-cas-server
+oc -n viya4 adm policy add-scc-to-user sas-opendistro -z sas-opendistro
+oc -n viya4 adm policy add-scc-to-user sas-connect-spawner -z sas-connect-spawner
+oc -n viya4 adm policy add-scc-to-user anyuid -z sas-model-publish-kaniko
+oc -n viya4 adm policy add-scc-to-user nonroot -z sas-programming-environment
+oc -n viya4 adm policy add-scc-to-user sas-microanalytic-score -z sas-microanalytic-score
+oc -n viya4 adm policy add-scc-to-user sas-model-repository -z sas-model-repository
+
+cd ~/viya4
+
+# recreate the shared-data PVC
+kubectl apply -f ~/yaml/create-pvc-shared-data.yaml
+
+# the fsgroup value has changed
+FSGROUP=$(oc get project viya4 -o jsonpath='{.metadata.annotations.openshift\.io/sa\.scc\.supplemental-groups}' | cut -f1 -d /)
+cp sas-bases/examples/security/container-security/update-fsgroup.yaml site-config/patches/update-fsgroup.yaml
+chmod 644 site-config/patches/update-fsgroup.yaml
+sed -i "s|{{ FSGROUP_VALUE }}|$FSGROUP|" site-config/patches/update-fsgroup.yaml
+
+# rebuild and submit
+kustomize build -o site.yaml
+
+kubectl apply --selector="sas.com/admin=cluster-api" --server-side --force-conflicts -f site.yaml
+kubectl apply --selector="sas.com/admin=cluster-wide" -f site.yaml
+kubectl apply --selector="sas.com/admin=cluster-local" -f site.yaml --prune
+kubectl apply --selector="sas.com/admin=namespace" -f site.yaml --prune
+```
+
+
 
 ### Split site.yaml
 
@@ -407,6 +457,4 @@ cd splityaml/
 kubectl create job sas-stop-all-`date +%s` --from cronjobs/sas-stop-all -n viya4
 kubectl create job sas-start-all-`date +%s` --from cronjobs/sas-start-all -n viya4
 ```
-
-
 
