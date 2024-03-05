@@ -1,0 +1,107 @@
+## Example PatchTransformer to update the fsgroup value.
+##
+## In the following code, the locations that require user specified values are indicated by a capitalized and
+## hyphenated name set off by curly braces and a space at each end. You should replace this token with the
+## actual value.
+## Replace the curly braces, interior spaces, and the variable name.
+## For instance, "1000830000"
+## should be replaced by the desired fsgroup value
+## The correct, final syntax would include a value within the allowed range, such as:
+## value: 1000120000
+##
+##
+
+#Update fsgroup from all statefulset pods
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: update-fsgroup-securitycontext-statefulset-transformer
+patch: |-
+  - op: replace
+    path: /spec/template/spec/securityContext/fsGroup
+    value: 1000830000
+target:
+  kind: StatefulSet
+
+#Update fsgroup from open distro for elasticsearch operator spec
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: update-sas-opendistro-fsgroup-transformer
+patch: |-
+  - op: replace
+    path: /spec/template/spec/securityContext/fsGroup
+    value: 1000830000
+target:
+  kind: OpenDistroCluster
+
+#Update fsgroup from sas-commonfiles spec
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: update-fsgroup-securitycontext-sas-commonfiles-transformer
+patch: |-
+  - op: replace
+    path: /spec/template/spec/securityContext/fsGroup
+    value: 1000830000
+target:
+  kind: Job
+  annotationSelector: sas.com/component-name in (sas-commonfiles)
+
+#Update fsgroup from sas-pyconfig spec
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: update-fsgroup-securitycontext-sas-pyconfig-transformer
+patch: |-
+  - op: replace
+    path: /spec/jobTemplate/spec/template/spec/securityContext/fsGroup
+    value: 1000830000
+target:
+  kind: CronJob
+  annotationSelector: sas.com/component-name in (sas-pyconfig)
+
+#Update fsgroup from all podtemplate spec
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: update-fsgroup-securitycontext-podtemplate-transformer
+patch: |-
+  - op: replace
+    path: /template/spec/securityContext/fsGroup
+    value: 1000830000
+target:
+  kind: PodTemplate
+
+#Update fsgroup from cas operator spec
+#NOTE: Changing the cas fsgroup will also require an update of the sas-cas-server dedicated SCC. The fsgroup value in the scc will need to updated so that the desired fsgroup value is within the min/max fields (Openshift).
+---
+#apiVersion: builtin
+#kind: PatchTransformer
+#metadata:
+#  name: update-sas-cas-server-fsgroup-transformer
+#patch: |-
+#  - op: replace
+#    path: /spec/controllerTemplate/spec/securityContext/fsGroup
+#    value: 1000830000
+#target:
+#  kind: CASDeployment
+
+#Update fsgroup from sas-audit spec
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: update-fsgroup-securitycontext-sas-audit-transformer
+patch: |-
+  - op: replace
+    path: /spec/template/spec/securityContext/fsGroup
+    value: 1000830000
+target:
+  kind: Deployment
+  annotationSelector: sas.com/component-name in (sas-audit)

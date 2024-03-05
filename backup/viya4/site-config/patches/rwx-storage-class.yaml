@@ -1,0 +1,5 @@
+kind: RWXStorageClass
+metadata:
+    name: wildcard
+spec:
+    storageClassName: efs-csi

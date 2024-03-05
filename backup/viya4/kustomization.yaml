@@ -1,0 +1,52 @@
+namespace: viya4
+
+resources:
+- sas-bases/base
+- sas-bases/overlays/network/route.openshift.io                                       # using routes
+- sas-bases/overlays/cas-server
+- sas-bases/overlays/crunchydata/postgres-operator                                    # crunchydata
+- sas-bases/overlays/postgres/platform-postgres
+- site-config/patches/mas-astore-pvc.yaml                                             # MAS (astore)
+- sas-bases/overlays/internal-elasticsearch                                           # OpenDistro
+
+configurations:
+- sas-bases/overlays/required/kustomizeconfig.yaml
+
+transformers:
+- site-config/patches/sas-fileshare-mount.yaml                                        # mount fileshare to SAS
+- site-config/patches/cas-fileshare-mount.yaml                                        # mount fileshare to CAS
+- sas-bases/overlays/sas-microanalytic-score/astores/astores-transformer.yaml         # MAS (astore)
+- sas-bases/overlays/required/transformers.yaml                                       # ---------------------------
+- site-config/patches/update-fsgroup.yaml                                             # update fsGroup value
+- sas-bases/overlays/internal-elasticsearch/internal-elasticsearch-transformer.yaml   # OpenDistro
+- sas-bases/overlays/security/container-security/remove-seccomp-transformer.yaml      # remove seccomp profiles
+
+components:
+- sas-bases/components/crunchydata/internal-platform-postgres                         # crunchydata
+- sas-bases/components/security/core/base/truststores-only                            # no ingress cert
+- sas-bases/components/security/network/route.openshift.io/route/front-door-tls       # enable TLS
+
+generators:
+- site-config/security/customer-provided-ca-certificates.yaml                         # LE root and CA certs
+
+patches:
+- path: site-config/patches/rwx-storage-class.yaml
+  target:
+    kind: PersistentVolumeClaim
+    annotationSelector: sas.com/component-name in (sas-backup-job,sas-data-quality-services,sas-commonfiles,sas-cas-operator,sas-pyconfig)
+
+secretGenerator:
+- name: sas-consul-config
+  behavior: merge
+  files:
+  - SITEDEFAULT_CONF=sitedefault.yaml
+
+configMapGenerator:
+- name: ingress-input
+  behavior: merge
+  literals:
+  - INGRESS_HOST=sasviya.apps.rosa.sasviya-5adf.mh2a.p3.openshiftapps.com
+- name: sas-shared-config
+  behavior: merge
+  literals:
+  - SAS_SERVICES_URL=https://sasviya.apps.rosa.sasviya-5adf.mh2a.p3.openshiftapps.com

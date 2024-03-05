@@ -1,0 +1,20 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: compute-server-add-nfsshare-volume
+patch: |-
+  - op: add
+    path: /template/spec/volumes/-
+    value:
+      name: shared-volume
+      persistentVolumeClaim:
+        claimName: sas-efs-shared-pvc
+  - op: add
+    path: /template/spec/containers/0/volumeMounts/-
+    value:
+        name: shared-volume
+        mountPath: /shared-data
+target:
+  name: sas-compute-job-config
+  version: v1
+  kind: PodTemplate

@@ -1,0 +1,75 @@
+config:
+    application:
+        sas.identities.providers.ldap.connection:
+            host: 'viya4-openldap-service.openldap.svc.cluster.local'
+            port: '389'
+            url: 'ldap://${sas.identities.providers.ldap.connection.host}:${sas.identities.providers.ldap.connection.port}'
+            userDN: 'cn=admin,dc=example,dc=org'
+            password: 'lnxsas'
+            anonymousBind: 'false'
+        sas.identities.providers.ldap.group:
+            accountId: 'cn'
+            baseDN: 'dc=example,dc=org'
+            createdDate: 'createTimestamp'
+            distinguishedName: 'none'
+            member: 'memberUid'
+            memberOf: 'none'
+            modifiedDate: 'modifyTimestamp'
+            objectClass: 'posixGroup'
+            objectFilter: '(objectClass=posixGroup)'
+            searchFilter: '${sas.identities.providers.ldap.group.accountId}={0}'
+        sas.identities.providers.ldap.user:
+            accountId: 'uid'
+            baseDN: 'dc=example,dc=org'
+            createdDate: 'createTimestamp'
+            distinguishedName: 'none'
+            memberOf: 'none'
+            modifiedDate: 'modifyTimestamp'
+            objectClass: 'posixAccount'
+            objectFilter: '(objectClass=posixAccount)'
+            searchFilter: '${sas.identities.providers.ldap.user.accountId}={0}'
+        sas.identities.providers.ldap:
+            primaryGroupMembershipsEnabled: 'true'
+        sas.identities:
+            administrator: 'sasadm'
+            identifier.disableGids: 'false'
+            identifier.generateGids: 'false'
+            identifier.generateUids: 'false'
+        sas.logon.initial:
+            user: sasboot
+            password: lnxsas
+        sas.commons.web.security.cors:
+            allowCredentials: 'true'
+            allowedHeaders: '*'
+            allowedMethods: '*'
+            allowedOrigins: '*'
+        sas.commons.web.security.csrf:
+            allowedUris: '.*'
+            failIfNoHeaders: 'false'
+        sas.studio:
+            fileNavigationRoot: 'SYSTEM'
+            showServerFiles: 'true'
+            allowGit: 'true'
+            allowGitPassword: 'true'
+            allowGitSSHPassword: 'true'
+            allowGitSSLCertFilepath: 'true'
+    compute:
+        sas.compute.server:
+            autoexec_code:
+                contents: |
+                    LOCKDOWN ENABLE_AMS=PYTHON;
+                    LOCKDOWN ENABLE_AMS=PYTHON_EMBED;
+                    LOCKDOWN ENABLE_AMS=SOCKET;
+            configuration_options:
+                contents: |
+                    -RLANG
+    batch:
+        sas.batch.server:
+            autoexec_code:
+                contents: |
+                    LOCKDOWN ENABLE_AMS=PYTHON;
+                    LOCKDOWN ENABLE_AMS=PYTHON_EMBED;
+                    LOCKDOWN ENABLE_AMS=SOCKET;
+            configuration_options:
+                contents: |
+                    -RLANG
