@@ -451,6 +451,33 @@ tbd.
 
 
 
+#### Using generic ephemeral volumes for SASWORK
+
+This configuration will dynamically attach an EBS disk to the compute node when a SAS compute session is started and removes it when the session terminates.
+
+```shell
+cp sas-bases/examples/sas-programming-environment/storage/change-viya-volume-storage-class.yaml site-config/patches/
+chmod 644 site-config/patches/change-viya-volume-storage-class.yaml 
+
+gev='ephemeral:
+        volumeClaimTemplate:
+          metadata:
+            labels:
+              type: ephemeral-saswork-volume
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            storageClassName: "gp3-csi"
+            resources:
+              requests:
+                storage: 64Gi'
+
+awk -i inplace -v x="{{ VOLUME-STORAGE-CLASS }}" -v y="$gev" '{gsub(x,y,$0); print $0}' site-config/patches/change-viya-volume-storage-class.yaml 
+
+cat site-config/patches/change-viya-volume-storage-class.yaml
+```
+
+
+
 #### Using local storage operator (LSO) for CAS disk cache
 
 We're using "diskfull" instance types for the CAS and the compute nodes. These virtual machines have an additional NVMe data disk, which can be used for SASWORK and CDC.
@@ -460,7 +487,7 @@ We're using "diskfull" instance types for the CAS and the compute nodes. These v
 
 Note that the LSO cannot be easily used for SASWORK, because it will mount a full partition as a single PV. Since each SAS session requires a separate PV, it would only allow a single session on each compute node. A work-around could be to partition the data disk into multiple partitions, which would limit the concurrency of SAS compute sessions to the amount of partitions.
 
-Options for reconfiguring SASWORK include:
+Other options for reconfiguring SASWORK include:
 
 * using emptyDir (default), optionally setting `kubelet_disk_type=temporary`
 * using the data disk via `hostPath`
@@ -470,20 +497,12 @@ Options for reconfiguring SASWORK include:
 
 ##### Prepare data disk for CAS node
 
-The data disk is not mounted and formatted initially. This code snippet formats the data disk for CDC. It should not be mounted when using the Local Storage Operator:
+Find the right (data) disk to use for the LSO.
 
 ```shell
+# check which disk is not mounted
 CASNODE=ip-10-0-0-235.us-east-2.compute.internal
-oc debug node/$CASNODE -q -t -- chroot /host bash
-
-# get the device ID
-ls -l /dev/disk/by-id/  | grep nvme1n1
-
-# format disk
-mkfs.xfs /dev/disk/by-id/nvme-Amazon_EC2_NVMe_Instance_Storage_AWS23762A4CD4FAA5952
-
-# check
-lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT
+oc debug node/$CASNODE -q -t -- chroot /host lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT
 
 # NAME          SIZE FSTYPE LABEL      MOUNTPOINT
 # nvme0n1       300G                   
@@ -491,7 +510,7 @@ lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT
 # ├─nvme0n1p2   127M vfat   EFI-SYSTEM 
 # ├─nvme0n1p3   384M ext4   boot       /boot
 # └─nvme0n1p4 299.5G xfs    root       /sysroot
-# nvme1n1     279.4G xfs
+# nvme1n1     279.4G
 ```
 
 
@@ -501,7 +520,7 @@ lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT
 Next, install the Local Storage Operator from the Operator Hub and define the LocalVolume for CDC.
 
 ```shell
-kubectl apply -f ~/yaml/create-localvolume-cas.yaml
+kubectl apply -f ~/yaml/create-nvme-localvolume-cas.yaml
 
 # check
 kubectl get LocalVolume --all-namespaces -o wide
