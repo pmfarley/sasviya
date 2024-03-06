@@ -15,6 +15,7 @@ configurations:
 transformers:
 - site-config/patches/sas-fileshare-mount.yaml                                        # mount fileshare to SAS
 - site-config/patches/cas-fileshare-mount.yaml                                        # mount fileshare to CAS
+- site-config/patches/set-nvme-cas-disk-cache.yaml                                    # add CAS disk cache
 - sas-bases/overlays/sas-microanalytic-score/astores/astores-transformer.yaml         # MAS (astore)
 - sas-bases/overlays/required/transformers.yaml                                       # ---------------------------
 - site-config/patches/update-fsgroup.yaml                                             # update fsGroup value

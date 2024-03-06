@@ -1,0 +1,32 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: cas-cache-nvmedisk
+patch: |-
+  - op: add
+    path: /spec/controllerTemplate/spec/volumes/-
+    value:
+      name: cas-cache-sastmp
+      ephemeral:
+        volumeClaimTemplate:
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            storageClassName: "sastmp-cas"
+            resources:
+              requests:
+                storage: 100Gi
+  - op: add
+    path: /spec/controllerTemplate/spec/containers/0/volumeMounts/-
+    value:
+      name: cas-cache-sastmp
+      mountPath: /cas/cache-sastmp # # mountPath is the path inside the pod that CAS will reference
+  - op: add
+    path: /spec/controllerTemplate/spec/containers/0/env/-
+    value:
+      name: CASENV_CAS_DISK_CACHE
+      value: "/cas/cache-sastmp" # # This has to match the value that is inside the pod
+target:
+  version: v1alpha1
+  group: viya.sas.com
+  kind: CASDeployment
+  name: .*

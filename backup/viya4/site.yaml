@@ -33242,34 +33242,34 @@ data:
     bnRpZmllci5nZW5lcmF0ZVVpZHM6ICdmYWxzZScKICAgICAgICBzYXMubG9nb24uaW5pdG
     lhbDoKICAgICAgICAgICAgdXNlcjogc2FzYm9vdAogICAgICAgICAgICBwYXNzd29yZDog
     bG54c2FzCiAgICAgICAgc2FzLmNvbW1vbnMud2ViLnNlY3VyaXR5LmNvcnM6CiAgICAgIC
-    AgICAgIGFsbG93Q3JlZGVudGlhbHM6ICd0cnVlJ2N2ZCAKICAgICAgICAgICAgYWxsb3dl
-    ZEhlYWRlcnM6ICcqJwogICAgICAgICAgICBhbGxvd2VkTWV0aG9kczogJyonCiAgICAgIC
-    AgICAgIGFsbG93ZWRPcmlnaW5zOiAnKicKICAgICAgICBzYXMuY29tbW9ucy53ZWIuc2Vj
-    dXJpdHkuY3NyZjoKICAgICAgICAgICAgYWxsb3dlZFVyaXM6ICcuKicKICAgICAgICAgIC
-    AgZmFpbElmTm9IZWFkZXJzOiAnZmFsc2UnCiAgICAgICAgc2FzLnN0dWRpbzoKICAgICAg
-    ICAgICAgZmlsZU5hdmlnYXRpb25Sb290OiAnU1lTVEVNJwogICAgICAgICAgICBzaG93U2
-    VydmVyRmlsZXM6ICd0cnVlJwogICAgICAgICAgICBhbGxvd0dpdDogJ3RydWUnCiAgICAg
-    ICAgICAgIGFsbG93R2l0UGFzc3dvcmQ6ICd0cnVlJwogICAgICAgICAgICBhbGxvd0dpdF
-    NTSFBhc3N3b3JkOiAndHJ1ZScKICAgICAgICAgICAgYWxsb3dHaXRTU0xDZXJ0RmlsZXBh
-    dGg6ICd0cnVlJwogICAgY29tcHV0ZToKICAgICAgICBzYXMuY29tcHV0ZS5zZXJ2ZXI6Ci
-    AgICAgICAgICAgIGF1dG9leGVjX2NvZGU6CiAgICAgICAgICAgICAgICBjb250ZW50czog
-    fAogICAgICAgICAgICAgICAgICAgIExPQ0tET1dOIEVOQUJMRV9BTVM9UFlUSE9OOwogIC
-    AgICAgICAgICAgICAgICAgIExPQ0tET1dOIEVOQUJMRV9BTVM9UFlUSE9OX0VNQkVEOwog
-    ICAgICAgICAgICAgICAgICAgIExPQ0tET1dOIEVOQUJMRV9BTVM9U09DS0VUOwogICAgIC
-    AgICAgICBjb25maWd1cmF0aW9uX29wdGlvbnM6CiAgICAgICAgICAgICAgICBjb250ZW50
-    czogfAogICAgICAgICAgICAgICAgICAgIC1STEFORwogICAgYmF0Y2g6CiAgICAgICAgc2
-    FzLmJhdGNoLnNlcnZlcjoKICAgICAgICAgICAgYXV0b2V4ZWNfY29kZToKICAgICAgICAg
-    ICAgICAgIGNvbnRlbnRzOiB8CiAgICAgICAgICAgICAgICAgICAgTE9DS0RPV04gRU5BQk
-    xFX0FNUz1QWVRIT047CiAgICAgICAgICAgICAgICAgICAgTE9DS0RPV04gRU5BQkxFX0FN
-    Uz1QWVRIT05fRU1CRUQ7CiAgICAgICAgICAgICAgICAgICAgTE9DS0RPV04gRU5BQkxFX0
-    FNUz1TT0NLRVQ7CiAgICAgICAgICAgIGNvbmZpZ3VyYXRpb25fb3B0aW9uczoKICAgICAg
-    ICAgICAgICAgIGNvbnRlbnRzOiB8CiAgICAgICAgICAgICAgICAgICAgLVJMQU5H
+    AgICAgIGFsbG93Q3JlZGVudGlhbHM6ICd0cnVlJwogICAgICAgICAgICBhbGxvd2VkSGVh
+    ZGVyczogJyonCiAgICAgICAgICAgIGFsbG93ZWRNZXRob2RzOiAnKicKICAgICAgICAgIC
+    AgYWxsb3dlZE9yaWdpbnM6ICcqJwogICAgICAgIHNhcy5jb21tb25zLndlYi5zZWN1cml0
+    eS5jc3JmOgogICAgICAgICAgICBhbGxvd2VkVXJpczogJy4qJwogICAgICAgICAgICBmYW
+    lsSWZOb0hlYWRlcnM6ICdmYWxzZScKICAgICAgICBzYXMuc3R1ZGlvOgogICAgICAgICAg
+    ICBmaWxlTmF2aWdhdGlvblJvb3Q6ICdTWVNURU0nCiAgICAgICAgICAgIHNob3dTZXJ2ZX
+    JGaWxlczogJ3RydWUnCiAgICAgICAgICAgIGFsbG93R2l0OiAndHJ1ZScKICAgICAgICAg
+    ICAgYWxsb3dHaXRQYXNzd29yZDogJ3RydWUnCiAgICAgICAgICAgIGFsbG93R2l0U1NIUG
+    Fzc3dvcmQ6ICd0cnVlJwogICAgICAgICAgICBhbGxvd0dpdFNTTENlcnRGaWxlcGF0aDog
+    J3RydWUnCiAgICBjb21wdXRlOgogICAgICAgIHNhcy5jb21wdXRlLnNlcnZlcjoKICAgIC
+    AgICAgICAgYXV0b2V4ZWNfY29kZToKICAgICAgICAgICAgICAgIGNvbnRlbnRzOiB8CiAg
+    ICAgICAgICAgICAgICAgICAgTE9DS0RPV04gRU5BQkxFX0FNUz1QWVRIT047CiAgICAgIC
+    AgICAgICAgICAgICAgTE9DS0RPV04gRU5BQkxFX0FNUz1QWVRIT05fRU1CRUQ7CiAgICAg
+    ICAgICAgICAgICAgICAgTE9DS0RPV04gRU5BQkxFX0FNUz1TT0NLRVQ7CiAgICAgICAgIC
+    AgIGNvbmZpZ3VyYXRpb25fb3B0aW9uczoKICAgICAgICAgICAgICAgIGNvbnRlbnRzOiB8
+    CiAgICAgICAgICAgICAgICAgICAgLVJMQU5HCiAgICBiYXRjaDoKICAgICAgICBzYXMuYm
+    F0Y2guc2VydmVyOgogICAgICAgICAgICBhdXRvZXhlY19jb2RlOgogICAgICAgICAgICAg
+    ICAgY29udGVudHM6IHwKICAgICAgICAgICAgICAgICAgICBMT0NLRE9XTiBFTkFCTEVfQU
+    1TPVBZVEhPTjsKICAgICAgICAgICAgICAgICAgICBMT0NLRE9XTiBFTkFCTEVfQU1TPVBZ
+    VEhPTl9FTUJFRDsKICAgICAgICAgICAgICAgICAgICBMT0NLRE9XTiBFTkFCTEVfQU1TPV
+    NPQ0tFVDsKICAgICAgICAgICAgY29uZmlndXJhdGlvbl9vcHRpb25zOgogICAgICAgICAg
+    ICAgICAgY29udGVudHM6IHwKICAgICAgICAgICAgICAgICAgICAtUkxBTkc=
 kind: Secret
 metadata:
   labels:
     sas.com/admin: cluster-local
     sas.com/deployment: sas-viya
-  name: sas-consul-config-c62gg7h4d4
+  name: sas-consul-config-ghhm6b85d2
   namespace: viya4
 type: Opaque
 ---
@@ -82598,7 +82598,7 @@ spec:
               - key: SASDEFAULT_CONF
                 mode: 438
                 path: sasdefault-secret.yml
-              name: sas-consul-config-c62gg7h4d4
+              name: sas-consul-config-ghhm6b85d2
       - emptyDir: {}
         name: tmp-volume
       - name: certframe-token
@@ -105903,6 +105903,8 @@ spec:
               name: sas-cas-license
         - name: CONSUL_HTTP_ADDR
           value: http://localhost:8500
+        - name: CASENV_CAS_DISK_CACHE
+          value: /cas/cache-sastmp
         - name: CASCFG_DQLOCALE
           value: ENUSA
         - name: CASCFG_DQSETUPLOC
@@ -105979,6 +105981,8 @@ spec:
           subPath: private
         - mountPath: /shared-data
           name: shared-volume
+        - mountPath: /cas/cache-sastmp
+          name: cas-cache-sastmp
         - mountPath: /models/resources/viya
           name: astores-volume
           subPath: resources
@@ -106311,6 +106315,16 @@ spec:
       - name: shared-volume
         persistentVolumeClaim:
           claimName: sas-efs-shared-pvc
+      - ephemeral:
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+              - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 100Gi
+              storageClassName: sastmp-cas
+        name: cas-cache-sastmp
       - name: astores-volume
         persistentVolumeClaim:
           claimName: sas-microanalytic-score-astores

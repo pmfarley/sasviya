@@ -1,0 +1,24 @@
+apiVersion: "local.storage.openshift.io/v1"
+kind: "LocalVolume"
+metadata:
+  name: "lv-sastmp-cas"
+  namespace: "openshift-local-storage"
+spec:
+  tolerations:
+  - key: workload.sas.com/class
+    operator: Equal
+    value: cas
+    effect: NoSchedule
+  nodeSelector:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: workload.sas.com/class
+        operator: In
+        values:
+        - cas
+  storageClassDevices:
+  - storageClassName: "sastmp-cas"
+    volumeMode: Filesystem
+    fsType: xfs
+    devicePaths:
+    - /dev/disk/by-id/nvme-Amazon_EC2_NVMe_Instance_Storage_AWS23762A4CD4FAA5952

@@ -28,26 +28,90 @@ https://console-openshift-console.apps.rosa.sasviya-5adf.mh2a.p3.openshiftapps.c
 
 ## Cluster topology overview
 
+Show label, instance types and local disks
+
 ```shell
-# show SAS labels
-printf "%-50s %-30s\n" "NodeName" "workload.sas.com/class"
 for node in $(kubectl get nodes -o name); do
-  for label in $(kubectl get node ${node##*/} -o json | jq -c '.metadata.labels."workload.sas.com/class"'); do
-	printf "%-50s %-30s\n" ${node##*/} ${label}
-  done
+  wkclass=$(kubectl get node ${node##*/} -o json | jq -c '.metadata.labels."workload.sas.com/class"')
+  instype=$(kubectl get node ${node##*/} -o json | jq -c '.metadata.labels."beta.kubernetes.io/instance-type"')
+  printf "%80s\n" " " | tr ' ' '-'
+  printf "%-45s %-20s %-20s\n" ${node##*/} ${wkclass} ${instype}
+  printf "%80s\n" " " | tr ' ' '-'
+  oc debug node/${node##*/} -q -t -- chroot /host lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT
 done
+```
 
-NodeName                                           workload.sas.com/class        
-ip-10-0-0-235.us-east-2.compute.internal           "cas"                         
-ip-10-0-0-248.us-east-2.compute.internal           "stateless"                   
-ip-10-0-0-250.us-east-2.compute.internal           "stateful"                    
-ip-10-0-0-56.us-east-2.compute.internal            "compute"                     
-ip-10-0-0-94.us-east-2.compute.internal            null                          
-ip-10-0-0-99.us-east-2.compute.internal            null                          
+Output:
 
-# show taints
+```
+--------------------------------------------------------------------------------
+ip-10-0-0-235.us-east-2.compute.internal      "cas"                "r5d.2xlarge"       
+--------------------------------------------------------------------------------
+NAME          SIZE FSTYPE LABEL      MOUNTPOINT
+nvme0n1       300G                   
+|-nvme0n1p1     1M                   
+|-nvme0n1p2   127M vfat   EFI-SYSTEM 
+|-nvme0n1p3   384M ext4   boot       /boot
+`-nvme0n1p4 299.5G xfs    root       /sysroot
+nvme1n1     279.4G                   
+--------------------------------------------------------------------------------
+ip-10-0-0-248.us-east-2.compute.internal      "stateless"          "r5.4xlarge"        
+--------------------------------------------------------------------------------
+NAME          SIZE FSTYPE LABEL      MOUNTPOINT
+nvme0n1       300G                   
+|-nvme0n1p1     1M                   
+|-nvme0n1p2   127M vfat   EFI-SYSTEM 
+|-nvme0n1p3   384M ext4   boot       /boot
+`-nvme0n1p4 299.5G xfs    root       /sysroot
+nvme1n1       128G ext4              /var/lib/kubelet/pods/f52edd7a-abd2-46cb-a9
+--------------------------------------------------------------------------------
+ip-10-0-0-250.us-east-2.compute.internal      "stateful"           "r5.2xlarge"        
+--------------------------------------------------------------------------------
+NAME          SIZE FSTYPE LABEL      MOUNTPOINT
+nvme0n1       300G                   
+|-nvme0n1p1     1M                   
+|-nvme0n1p2   127M vfat   EFI-SYSTEM 
+|-nvme0n1p3   384M ext4   boot       /boot
+`-nvme0n1p4 299.5G xfs    root       /sysroot
+nvme1n1         1G ext4              /var/lib/kubelet/pods/e19300d1-fa20-4ca6-85
+nvme2n1         2G ext4              /var/lib/kubelet/pods/cfeee0a7-1cc6-4eb2-9f
+nvme3n1         1G ext4              /var/lib/kubelet/pods/a6083d90-ad22-46a3-8a
+nvme4n1         1G ext4              /var/lib/kubelet/pods/d5d8e560-1fbd-483c-98
+nvme5n1         1G ext4              /var/lib/kubelet/pods/2081e4b3-7edd-47d2-ad
+nvme6n1       128G ext4              /var/lib/kubelet/pods/8fca4709-f170-4227-8c
+nvme7n1       128G ext4              /var/lib/kubelet/pods/41f9754a-6835-4b35-8b
+--------------------------------------------------------------------------------
+ip-10-0-0-56.us-east-2.compute.internal       "compute"            "r5d.xlarge"        
+--------------------------------------------------------------------------------
+NAME          SIZE FSTYPE LABEL      MOUNTPOINT
+nvme1n1     139.7G                   
+nvme0n1       300G                   
+|-nvme0n1p1     1M                   
+|-nvme0n1p2   127M vfat   EFI-SYSTEM 
+|-nvme0n1p3   384M ext4   boot       /boot
+`-nvme0n1p4 299.5G xfs    root       /sysroot
+--------------------------------------------------------------------------------
+ip-10-0-0-94.us-east-2.compute.internal       null                 "m5.2xlarge"        
+--------------------------------------------------------------------------------
+...
+--------------------------------------------------------------------------------
+ip-10-0-0-99.us-east-2.compute.internal       null                 "m5.2xlarge"        
+--------------------------------------------------------------------------------
+...
+```
+
+
+
+Show taints
+
+```shell
+
 kubectl get nodes -o='custom-columns=NodeName:.metadata.name,TaintKey:.spec.taints[].key,TaintValue:.spec.taints[].value,TaintEffect:.spec.taints[*].effect'
+```
 
+Output:
+
+```
 NodeName                                   TaintKey                 TaintValue   TaintEffect
 ip-10-0-0-235.us-east-2.compute.internal   workload.sas.com/class   cas          NoSchedule
 ip-10-0-0-248.us-east-2.compute.internal   workload.sas.com/class   stateless    NoSchedule
@@ -323,11 +387,13 @@ transformers:
 
 #### TLS - handling web server certificates
 
-TLS options for Routes in OpenShift:
+There are multiple TLS options for Routes in OpenShift:
 
 ![TLS options in OpenShift](edge_passthrough_reencrypt1.png)
 
-This deployment uses the default TLS certificate stored on the Router ("edge"). This certificate is signed by Let's Encrypt using the following trust chain:
+SAS Viya by default uses the "edge" termination case and in general assumes that a web server certificate (cert + key) is available for the deployment. The certificate could either be provided by the customer's IT or generated during the deployment using openssl.
+
+However, this deployment uses the default TLS certificate stored on the Router (HAProxy). This certificate is signed by Let's Encrypt using the following trust chain:
 
 ```shell
 </dev/null openssl s_client -connect console-openshift-console.apps.rosa.sasviya-5adf.mh2a.p3.openshiftapps.com:443 \
@@ -341,11 +407,15 @@ depth=0 CN = *.apps.rosa.sasviya-5adf.mh2a.p3.openshiftapps.com
 ...
 ```
 
+i.e.:
+
 * C = US, O = Internet Security Research Group, CN = ISRG Root X1
   * C = US, O = Let's Encrypt, CN = R3
     * CN = *.apps.rosa.sasviya-5adf.mh2a.p3.openshiftapps.com
 
-Some components in SAS Viya use a "north-south" communication pattern, so SAS need to trust the LE CA and Root certs. We will add these certificates to the truststores (might not be needed actually - the CA's of the LE certificate could already be known and trusted).
+Since we do not have a web server certificate available, we cannot include the patches meant for front-door-tls or full-stack-tls which can be found at `sas-bases/components/security/core/base`. We still want to include the templates found at `sas-bases/components/security/network/route.openshift.io/route` because we do want Routes to be added to the site.yaml. 
+
+As some components in SAS Viya use a "north-south" communication pattern, SAS needs to trust the LE CA and Root certs. We will add these certificates to the pod truststores (this might not be needed actually - the CA's of the LE certificate could already be known and trusted).
 
 ```shell
 mkdir -p site-config/security/cacerts
@@ -371,6 +441,8 @@ sed -i "s|{{ CA_CERTIFICATE_FILE_NAME }}|site-config/security/cacerts/le-isrgroo
 printf "\n- site-config/security/cacerts/le-r3.pem\n" >> site-config/security/customer-provided-ca-certificates.yaml
 ```
 
+We will include `sas-bases/components/security/core/base/truststores-only` in the kustomization.yaml to make kustomize pick up the truststore configuration.
+
 
 
 #### Using an external PostgreSQL database
@@ -379,9 +451,107 @@ tbd.
 
 
 
-#### Using local storage operator for SASWORK and CAS disk cache
+#### Using local storage operator (LSO) for CAS disk cache
 
-tbd.
+We're using "diskfull" instance types for the CAS and the compute nodes. These virtual machines have an additional NVMe data disk, which can be used for SASWORK and CDC.
+
+* r5d.xlarge : 1 x 150 NVMe SSD
+* r5d.2xlarge : 1x 300 NVMe SSD
+
+Note that the LSO cannot be easily used for SASWORK, because it will mount a full partition as a single PV. Since each SAS session requires a separate PV, it would only allow a single session on each compute node. A work-around could be to partition the data disk into multiple partitions, which would limit the concurrency of SAS compute sessions to the amount of partitions.
+
+Options for reconfiguring SASWORK include:
+
+* using emptyDir (default), optionally setting `kubelet_disk_type=temporary`
+* using the data disk via `hostPath`
+* using EBS-backed generic ephemeral volumes
+
+
+
+##### Prepare data disk for CAS node
+
+The data disk is not mounted and formatted initially. This code snippet formats the data disk for CDC. It should not be mounted when using the Local Storage Operator:
+
+```shell
+CASNODE=ip-10-0-0-235.us-east-2.compute.internal
+oc debug node/$CASNODE -q -t -- chroot /host bash
+
+# get the device ID
+ls -l /dev/disk/by-id/  | grep nvme1n1
+
+# format disk
+mkfs.xfs /dev/disk/by-id/nvme-Amazon_EC2_NVMe_Instance_Storage_AWS23762A4CD4FAA5952
+
+# check
+lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT
+
+# NAME          SIZE FSTYPE LABEL      MOUNTPOINT
+# nvme0n1       300G                   
+# ├─nvme0n1p1     1M                   
+# ├─nvme0n1p2   127M vfat   EFI-SYSTEM 
+# ├─nvme0n1p3   384M ext4   boot       /boot
+# └─nvme0n1p4 299.5G xfs    root       /sysroot
+# nvme1n1     279.4G xfs
+```
+
+
+
+##### Configure LocalVolume
+
+Next, install the Local Storage Operator from the Operator Hub and define the LocalVolume for CDC.
+
+```shell
+kubectl apply -f ~/yaml/create-localvolume-cas.yaml
+
+# check
+kubectl get LocalVolume --all-namespaces -o wide
+
+oc get sc | grep sastmp
+oc get pv | grep local
+
+oc get all -n openshift-local-storage
+```
+
+
+
+##### SAS configuration
+
+The CAS service account is not allowed to use ephemeral storage, so this needs to be added to the SCC:
+
+```shell
+# check ("ephemeral" is missing)
+oc get scc sas-cas-server -o jsonpath='{.volumes}'
+oc get scc sas-cas-server -o json | jq '.volumes += ["ephemeral"]' | oc apply -f -
+```
+
+Add the transformer patch to kustomization.yaml and redeploy. Then restart the CAS server:
+
+```yaml
+oc -n viya4  delete pods -l app.kubernetes.io/managed-by=sas-cas-operator
+```
+
+Check in SAS Studio:
+
+```shell
+cas sess1;
+
+proc cas;
+    session sess1;
+    accessControl.assumeRole / adminRole="superuser";
+    builtins.getCacheInfo result=results;
+    print results.diskCacheInfo;
+run;
+quit;
+
+cas sess1 clear;
+```
+
+Output:
+
+```
+Node	File System	Capacity	Free_Mem	%_Used	NodePath
+controller.sas-cas-server-default.viya4.svc.cluster.local	/dev/nvme1n1	279 GB	276 GB	2.0	/cas/cache-sastmp
+```
 
 
 
