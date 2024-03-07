@@ -393,6 +393,10 @@ There are multiple TLS options for Routes in OpenShift:
 
 SAS Viya by default uses the "edge" termination case and in general assumes that a web server certificate (cert + key) is available for the deployment. The certificate could either be provided by the customer's IT or generated during the deployment using openssl.
 
+
+
+##### HAProxy LetsEncrypt certificate chain
+
 However, this deployment uses the default TLS certificate stored on the Router (HAProxy). This certificate is signed by Let's Encrypt using the following trust chain:
 
 ```shell
@@ -430,6 +434,37 @@ openssl x509 -in site-config/security/cacerts/le-r3.pem -text
 openssl x509 -in site-config/security/cacerts/le-isrgrootx1.pem -text
 ```
 
+
+
+##### PostgreSQL database server certificate chain
+
+The connection to the external PostgreSQL database  (RDS) is secured using TLS as well, so this CA and root certificate should be added as well. Like before, the following command shows the certificate chain:
+
+```shell
+</dev/null openssl s_client -starttls postgres -connect psql-sasviya-5adf.caimyblnfcv2.us-east-2.rds.amazonaws.com:5432 -showcerts | openssl x509
+
+depth=2 C = US, O = "Amazon Web Services, Inc.", OU = Amazon RDS, ST = WA, CN = Amazon RDS us-east-2 Root CA RSA2048 G1, L = Seattle
+verify return:1
+depth=1 C = US, O = "Amazon Web Services, Inc.", OU = Amazon RDS, ST = WA, CN = Amazon RDS us-east-2 Subordinate CA RSA2048 G1.A.2, L = Seattle
+verify return:1
+depth=0 CN = psql-sasviya-5adf.caimyblnfcv2.us-east-2.rds.amazonaws.com, OU = RDS, O = Amazon.com, L = Seattle, ST = Washington, C = US
+verify return:1
+```
+
+* C = US, O = "Amazon Web Services, Inc.", OU = Amazon RDS, ST = WA, CN = Amazon RDS us-east-2 Root CA RSA2048 G1, L = Seattle
+  * C = US, O = "Amazon Web Services, Inc.", OU = Amazon RDS, ST = WA, CN = Amazon RDS us-east-2 Subordinate CA RSA2048 G1.A.2, L = Seattle
+    * CN = psql-sasviya-5adf.caimyblnfcv2.us-east-2.rds.amazonaws.com, OU = RDS, O = Amazon.com, L = Seattle, ST = Washington, C = US
+
+To extract the certificates from the output of the openssl command:
+
+```shell
+</dev/null openssl s_client -starttls postgres -connect psql-sasviya-5adf.caimyblnfcv2.us-east-2.rds.amazonaws.com:5432 -showcerts 2>&1 | sed -n '/-----BEGIN/,/-----END/p' > ~/viya4/site-config/security/cacerts/rds-certs.pem
+```
+
+
+
+##### Adding the certificates to the Viya truststores
+
 The patch to add the new certificates to the truststores:
 
 ```shell
@@ -439,6 +474,7 @@ chmod 644 site-config/security/customer-provided-ca-certificates.yaml
 
 sed -i "s|{{ CA_CERTIFICATE_FILE_NAME }}|site-config/security/cacerts/le-isrgrootx1.pem|" site-config/security/customer-provided-ca-certificates.yaml
 printf "\n- site-config/security/cacerts/le-r3.pem\n" >> site-config/security/customer-provided-ca-certificates.yaml
+printf "\n- site-config/security/cacerts/rds-certs.pem\n" >> site-config/security/customer-provided-ca-certificates.yaml
 ```
 
 We will include `sas-bases/components/security/core/base/truststores-only` in the kustomization.yaml to make kustomize pick up the truststore configuration.
@@ -447,7 +483,12 @@ We will include `sas-bases/components/security/core/base/truststores-only` in th
 
 #### Using an external PostgreSQL database
 
-tbd.
+SAS stores its metadata in a PostgreSQL database, which in this case has been set up as a managed RDS service. To connect to the database:
+
+```shell
+PGPASSWORD=stJb... psql -h psql-sasviya-5adf.caimyblnfcv2.us-east-2.rds.amazonaws.com -U postgres -d SharedServices
+\dt+ *.*
+```
 
 
 
