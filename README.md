@@ -105,7 +105,6 @@ ip-10-0-0-99.us-east-2.compute.internal       null                 "m5.2xlarge"
 Show taints
 
 ```shell
-
 kubectl get nodes -o='custom-columns=NodeName:.metadata.name,TaintKey:.spec.taints[].key,TaintValue:.spec.taints[].value,TaintEffect:.spec.taints[*].effect'
 ```
 
@@ -220,6 +219,17 @@ sas-viya plugins install --repo sas sid-functions
 sas-viya plugins install --repo sas transfer
 sas-viya plugins install --repo sas workload-orchestrator
 sas-viya plugins install --repo sas visual-forecasting
+```
+
+Connecting:
+
+```shell
+sas-viya profile set-endpoint https://sasviya.apps.rosa.sasviya-5adf.mh2a.p3.openshiftapps.com/
+sas-viya profile set-output text
+sas-viya profile toggle-color n
+sas-viya profile show
+
+sas-viya auth login --user sasadm --password lnxsas
 ```
 
 
@@ -395,7 +405,7 @@ SAS Viya by default uses the "edge" termination case and in general assumes that
 
 
 
-##### HAProxy LetsEncrypt certificate chain
+##### HAProxy, LetsEncrypt certificate chain
 
 However, this deployment uses the default TLS certificate stored on the Router (HAProxy). This certificate is signed by Let's Encrypt using the following trust chain:
 
@@ -436,7 +446,7 @@ openssl x509 -in site-config/security/cacerts/le-isrgrootx1.pem -text
 
 
 
-##### PostgreSQL database server certificate chain
+##### PostgreSQL database server, certificate chain
 
 The connection to the external PostgreSQL database  (RDS) is secured using TLS as well, so this CA and root certificate should be added as well. Like before, the following command shows the certificate chain:
 
@@ -450,6 +460,8 @@ verify return:1
 depth=0 CN = psql-sasviya-5adf.caimyblnfcv2.us-east-2.rds.amazonaws.com, OU = RDS, O = Amazon.com, L = Seattle, ST = Washington, C = US
 verify return:1
 ```
+
+i.e.:
 
 * C = US, O = "Amazon Web Services, Inc.", OU = Amazon RDS, ST = WA, CN = Amazon RDS us-east-2 Root CA RSA2048 G1, L = Seattle
   * C = US, O = "Amazon Web Services, Inc.", OU = Amazon RDS, ST = WA, CN = Amazon RDS us-east-2 Subordinate CA RSA2048 G1.A.2, L = Seattle
@@ -521,7 +533,7 @@ cat site-config/patches/change-viya-volume-storage-class.yaml
 
 #### Using local storage operator (LSO) for CAS disk cache
 
-We're using "diskfull" instance types for the CAS and the compute nodes. These virtual machines have an additional NVMe data disk, which can be used for SASWORK and CDC.
+We're using "diskfull" instance types for the CAS and the compute nodes. These virtual machines have an additional NVMe data disk, which can be used for CDC.
 
 * r5d.xlarge : 1 x 150 NVMe SSD
 * r5d.2xlarge : 1x 300 NVMe SSD
